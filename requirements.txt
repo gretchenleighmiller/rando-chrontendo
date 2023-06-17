@@ -1,5 +1,5 @@
 cohost
 opencv-python
-twitter
+tweepy
 Mastodon.py
 PyTumblr
