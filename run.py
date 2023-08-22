@@ -2,14 +2,17 @@ import logging
 import math
 import os
 import time
+from datetime import datetime
 from random import randint
 
 import cv2
 import pytumblr
+import tweepy
+from atproto import Client as ATClient
+from atproto import models as ATModels
 from cohost.models.block import AttachmentBlock as CohostAttachmentBlock
 from cohost.models.user import User as CohostUser
 from mastodon import Mastodon
-import tweepy
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -44,6 +47,10 @@ TUMBLR_CREDENTIALS = {
     "oauth_secret": os.environ.get("TUMBLR_OAUTH_SECRET"),
 }
 TUMBLR_BLOG = os.environ.get("TUMBLR_BLOG")
+BLUESKY_CREDENTIALS = {
+    "login": os.environ["BSKY_HANDLE"],
+    "password": os.environ["BSKY_PASSWORD"],
+}
 
 
 def run():
@@ -84,7 +91,9 @@ class RandoChrontendoPost:
         media_upload_auth = tweepy.OAuth1UserHandler(**TWITTER_CREDENTIALS)
         media_upload_api = tweepy.API(media_upload_auth)
         with open(self.image_file_name, "rb") as image_data:
-            media_id = media_upload_api.media_upload(self.image_file_name, file=image_data).media_id_string
+            media_id = media_upload_api.media_upload(
+                self.image_file_name, file=image_data
+            ).media_id_string
         media_upload_api.create_media_metadata(media_id, self.alt_text)
 
         twitter_v2_client = tweepy.Client(**TWITTER_CREDENTIALS)
@@ -113,6 +122,29 @@ class RandoChrontendoPost:
             media = mastodon.media(media)
             timeout *= 2
         mastodon.status_post("", media_ids=[media["id"]])
+
+    def post_bluesky(self):
+        client = ATClient()
+        client.login(**BLUESKY_CREDENTIALS)
+        with open(self.image_file_name, "rb") as img:
+            img_data = img.read()
+        image_upload = client.com.atproto.repo.upload_blob(img_data)
+        images = [
+            ATModels.AppBskyEmbedImages.Image(
+                alt=self.alt_text, image=image_upload.blob
+            )
+        ]
+        embed = ATModels.AppBskyEmbedImages.Main(images=images)
+
+        client.com.atproto.repo.create_record(
+            ATModels.ComAtprotoRepoCreateRecord.Data(
+                repo=client.me.did,
+                collection=ATModels.ids.AppBskyFeedPost,
+                record=ATModels.AppBskyFeedPost.Main(
+                    createdAt=datetime.now().isoformat(), text="", embed=embed
+                ),
+            )
+        )
 
     def _get_video_file(self):
         video_files = os.listdir(VIDEOS_DIRECTORY)
