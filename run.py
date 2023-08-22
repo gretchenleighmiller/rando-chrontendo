@@ -76,6 +76,11 @@ def run():
     except Exception as e:
         logger.error(f"Mastodon post failed: {e}")
 
+    try:
+        post.post_bluesky()
+    except Exception as e:
+        logger.error(f"Bluesky post failed: {e}")
+
 
 class RandoChrontendoPost:
     def __init__(self, image_file_name="image.jpg"):
