@@ -6,7 +6,6 @@ from datetime import datetime
 from random import randint
 
 import cv2
-import pytumblr
 from atproto import Client as ATClient
 from atproto import models as ATModels
 from cohost.models.block import AttachmentBlock as CohostAttachmentBlock
@@ -33,13 +32,6 @@ MASTODON_CREDENTIALS = {
     "access_token": os.environ.get("MASTODON_ACCESS_TOKEN"),
     "api_base_url": os.environ.get("MASTODON_API_BASE_URL"),
 }
-TUMBLR_CREDENTIALS = {
-    "consumer_key": os.environ.get("TUMBLR_CONSUMER_KEY"),
-    "consumer_secret": os.environ.get("TUMBLR_CONSUMER_SECRET"),
-    "oauth_token": os.environ.get("TUMBLR_OAUTH_TOKEN"),
-    "oauth_secret": os.environ.get("TUMBLR_OAUTH_SECRET"),
-}
-TUMBLR_BLOG = os.environ.get("TUMBLR_BLOG")
 BLUESKY_CREDENTIALS = {
     "login": os.environ["BSKY_HANDLE"],
     "password": os.environ["BSKY_PASSWORD"],
@@ -53,11 +45,6 @@ def run():
         post.post_cohost()
     except Exception as e:
         logger.error(f"Cohost post failed: {e}")
-
-    try:
-        post.post_tumblr()
-    except Exception as e:
-        logger.error(f"Tumblr post failed: {e}")
 
     try:
         post.post_mastodon()
@@ -85,14 +72,6 @@ class RandoChrontendoPost:
         project = user.getProject(COHOST_PROJECT)
         blocks = [CohostAttachmentBlock(self.image_file_name, alt_text=self.alt_text)]
         project.post("", blocks)
-
-    def post_tumblr(self):
-        client = pytumblr.TumblrRestClient(**TUMBLR_CREDENTIALS)
-        client.create_photo(
-            TUMBLR_BLOG,
-            data=self.image_file_name,
-            caption=self.alt_text,
-        )
 
     def post_mastodon(self):
         mastodon = Mastodon(**MASTODON_CREDENTIALS)
