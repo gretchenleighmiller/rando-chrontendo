@@ -1,6 +1,5 @@
 cohost
 opencv-python
-tweepy
 Mastodon.py
 PyTumblr
 atproto

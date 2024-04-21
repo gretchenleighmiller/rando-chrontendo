@@ -7,7 +7,6 @@ from random import randint
 
 import cv2
 import pytumblr
-import tweepy
 from atproto import Client as ATClient
 from atproto import models as ATModels
 from cohost.models.block import AttachmentBlock as CohostAttachmentBlock
@@ -25,12 +24,6 @@ logger.addHandler(fh)
 
 VIDEOS_DIRECTORY = os.environ.get("VIDEOS_DIR")
 
-TWITTER_CREDENTIALS = {
-    "access_token": os.environ.get("TWITTER_ACCESS_TOKEN_KEY"),
-    "access_token_secret": os.environ.get("TWITTER_ACCESS_TOKEN_SECRET"),
-    "consumer_key": os.environ.get("TWITTER_CONSUMER_KEY"),
-    "consumer_secret": os.environ.get("TWITTER_CONSUMER_SECRET"),
-}
 COHOST_CREDENTIALS = {
     "email": os.environ.get("COHOST_EMAIL"),
     "password": os.environ.get("COHOST_PASSWORD"),
@@ -55,11 +48,6 @@ BLUESKY_CREDENTIALS = {
 
 def run():
     post = RandoChrontendoPost()
-
-    try:
-        post.post_twitter()
-    except Exception as e:
-        logger.error(f"Twitter post failed: {e}")
 
     try:
         post.post_cohost()
@@ -91,18 +79,6 @@ class RandoChrontendoPost:
     @property
     def alt_text(self):
         return f"{self.video_name} ({self.timestamp})"
-
-    def post_twitter(self):
-        media_upload_auth = tweepy.OAuth1UserHandler(**TWITTER_CREDENTIALS)
-        media_upload_api = tweepy.API(media_upload_auth)
-        with open(self.image_file_name, "rb") as image_data:
-            media_id = media_upload_api.media_upload(
-                self.image_file_name, file=image_data
-            ).media_id_string
-        media_upload_api.create_media_metadata(media_id, self.alt_text)
-
-        twitter_v2_client = tweepy.Client(**TWITTER_CREDENTIALS)
-        twitter_v2_client.create_tweet(media_ids=[media_id])
 
     def post_cohost(self):
         user = CohostUser.login(**COHOST_CREDENTIALS)
