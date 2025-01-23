@@ -100,8 +100,8 @@ class RandoChrontendoPost:
             ATModels.ComAtprotoRepoCreateRecord.Data(
                 repo=client.me.did,
                 collection=ATModels.ids.AppBskyFeedPost,
-                record=ATModels.AppBskyFeedPost.Main(
-                    createdAt=datetime.now().isoformat(), text="", embed=embed
+                record=ATModels.AppBskyFeedPost.Record(
+                    createdAt=f"{datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None).isoformat(timespec='milliseconds')}Z", text="", embed=embed
                 ),
             )
         )
